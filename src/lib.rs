@@ -1,4 +1,5 @@
 pub mod dhcp;
+pub mod macaddress;
 
 // write a test function in lib.rs and start test
 #[cfg(test)]
