@@ -28,7 +28,7 @@ use std::net::Ipv4Addr;
 pub enum DhcpOptions{
 
   // RFC 1497 Vendor Extensions
-  // from code 1 to 18 and code 255
+  // code 1 to 18 and code 255
   PadOption, // code 0
   EndOption, // code 255
   SubnetMask(Ipv4Addr), // code 1 If both the subnet mask and the router option are specified in a DHCP reply, the subnet mask option MUST be first.
@@ -55,15 +55,23 @@ pub enum DhcpOptions{
   ExtensionsPath(String), // code 18
 
   // IP Layer Parameters per Host
-  // from code 19 to 25
+  // code 19 to 25
   // IP Layer Parameters per Interface
-  // from code 26 to 49
+  // code 26 to 33
+  // Link Layer Parameters per Interface
+  // code 34 to 36
+  // TCP Parameters
+  // code 37 to 39
+  // Application and Service Parameters
+  // code 40 to 42
+  // Vendor Specific Information (Add in RFC 2132)
+  // code 43-49 and 64-65 68-76
   // TODO Unrecognized options will be recognized as Unrecognized(RawDhcpOption)
   // including some important options e.g. MTU/ARP/NTR/Static Route
   Unrecognized,
 
   // DHCP Extensions
-  // from 50 to 61
+  // code 50 to 61
   RequestedIpAddress(Ipv4Addr), // code 50 // This option is used in a client request (DHCPDISCOVER) to allow the client to request that a particular IP address be assigned.
   IpAddressLeaseTime(u32), // code 51 // This option is used in a client request (DHCPDISCOVER or DHCPREQUEST) to allow the client to request a lease time for the IP address.  In a server reply (DHCPOFFER), a DHCP server uses this option to specify the lease time it is willing to offer.
   OptionOverload(OptionOverLoadCode), // code 52 // The code for this option is 52, and its length is 1.  Legal values for this option are: 1 2 3. This option is used to indicated that the DHCP "sname" or "file" fields are being overloaded by using them to carry DHCP options.
@@ -76,7 +84,8 @@ pub enum DhcpOptions{
   MaximumDhcpMessageSize(u16), // code 57  minimum 576
   RenewalTimeValue(u32), // code 58 32-bit unsigned integer
   RebindingTimeValue(u32), // code 59 32-bit unsigned integer
-  ClassIdentifier(Vec<u8>), // code 60 minimum 1 octet class identifier. Servers not equipped to interpret the class-specific information sent by a client MUST ignore it (although it may be reported).
+  ClassIdentifier(Vec<u8>), // code 60 minimum 1 octet class identifier. Servers not equipped to interpret the class-specific information sent by a client MUST ignore it (although it may be reported). // May carry a customized messages with username and p\*w$#d for authentication like IPoE protocl
+
   ClientIdentifier(Vec<u8>), // code 61 minimum 2 octets. The client identifier is used by the client to pass its unique identifier to the server. See HostName option.
 
 
@@ -97,17 +106,19 @@ pub enum DhcpMessageTypeCode {
 }
 
 // DHCP Options;
+pub const PAD_OPTION: u8 = 0;
+pub const END_OPTION: u8 = 255;
 pub const SUBNET_MASK: u8 = 1;
 pub const TIME_OFFSET: u8 = 2;
-pub const ROUTER: u8 = 3;
-pub const TIME_SERVER: u8 = 4;
-pub const NAME_SERVER: u8 = 5;
-pub const DOMAIN_NAME_SERVER: u8 = 6;
-pub const LOG_SERVER: u8 = 7;
-pub const COOKIE_SERVER: u8 = 8;
-pub const LPR_SERVER: u8 = 9;
-pub const IMPRESS_SERVER: u8 = 10;
-pub const RESOURCE_LOCATION_SERVER: u8 = 11;
+pub const ROUTERS: u8 = 3;
+pub const TIME_SERVERS: u8 = 4;
+pub const NAME_SERVERS: u8 = 5;
+pub const DOMAIN_NAME_SERVERS: u8 = 6;
+pub const LOG_SERVERS: u8 = 7;
+pub const COOKIE_SERVERS: u8 = 8;
+pub const LPR_SERVERS: u8 = 9;
+pub const IMPRESS_SERVERS: u8 = 10;
+pub const RESOURCE_LOCATION_SERVERS: u8 = 11;
 pub const HOST_NAME: u8 = 12;
 pub const BOOT_FILE_SIZE: u8 = 13;
 pub const MERIT_DUMP_FILE: u8 = 14;
@@ -117,11 +128,11 @@ pub const ROOT_PATH: u8 = 17;
 pub const EXTENSIONS_PATH: u8 = 18;
 
 // IP LAYER PARAMETERS PER HOST;
-pub const IP_FORWARDING_ENABLE_DISABLE: u8 = 19;
-pub const NON_LOCAL_SOURCE_ROUTING_ENABLE_DISABLE: u8 = 20;
+pub const IP_FORWARDING: u8 = 19;
+pub const NON_LOCAL_SOURCE_ROUTING: u8 = 20;
 pub const POLICY_FILTER: u8 = 21;
 pub const MAXIMUM_DATAGRAM_REASSEMBLY_SIZE: u8 = 22;
-pub const DEFAULT_IP_TIME_TO_LIVE: u8 = 23;
+pub const DEFAULT_IP_TTL: u8 = 23;
 pub const PATH_MTU_AGING_TIMEOUT: u8 = 24;
 pub const PATH_MTU_PLATEAU_TABLE: u8 = 25;
 
@@ -149,6 +160,8 @@ pub const TCP_KEEPALIVE_GARBAGE: u8 = 39;
 pub const NETWORK_INFORMATION_SERVICE_DOMAIN: u8 = 40;
 pub const NETWORK_INFORMATION_SERVERS: u8 = 41;
 pub const NETWORK_TIME_PROTOCOL_SERVERS: u8 = 42;
+
+// VENDOR SPECIFIC INFORMATION;
 pub const VENDOR_SPECIFIC_INFORMATION: u8 = 43;
 pub const NETBIOS_OVER_TCPIP_NAME_SERVER: u8 = 44;
 pub const NETBIOS_OVER_TCPIP_DATAGRAM_DISTRIBUTION_SERVER: u8 = 45;
@@ -173,7 +186,7 @@ pub const RELAY_AGENT_INFORMATION: u8 = 82;
 // DHCP EXTENSIONS
 pub const REQUESTED_IP_ADDRESS: u8 = 50;
 pub const IP_ADDRESS_LEASE_TIME: u8 = 51;
-pub const OVERLOAD: u8 = 52;
+pub const OPTION_OVERLOAD: u8 = 52;
 pub const DHCP_MESSAGE_TYPE: u8 = 53;
 pub const SERVER_IDENTIFIER: u8 = 54;
 pub const PARAMETER_REQUEST_LIST: u8 = 55;
@@ -181,20 +194,24 @@ pub const MESSAGE: u8 = 56;
 pub const MAXIMUM_DHCP_MESSAGE_SIZE: u8 = 57;
 pub const RENEWAL_TIME_VALUE: u8 = 58;
 pub const REBINDING_TIME_VALUE: u8 = 59;
-pub const VENDOR_CLASS_IDENTIFIER: u8 = 60;
+pub const CLASS_IDENTIFIER: u8 = 60;
 pub const CLIENT_IDENTIFIER: u8 = 61;
 
 pub const TFTP_SERVER_NAME: u8 = 66;
 pub const BOOTFILE_NAME: u8 = 67;
 
 pub const USER_CLASS: u8 = 77;
-
+// No support for DHCPv4 options in [RFC 4702](https://datatracker.ietf.org/doc/html/rfc4702)
+// pub const CLIENT_FQDN: u8 = 81;
 pub const CLIENT_ARCHITECTURE: u8 = 93;
-
 pub const TZ_POSIX_STRING: u8 = 100;
 pub const TZ_DATABASE_STRING: u8 = 101;
 
+// Add in RFC 3442 (obsoletes the static route option in RFC 2132 option 33)
 pub const CLASSLESS_ROUTE_FORMAT: u8 = 121;
+
+// No support for DHCPv4 options in [RFC 3925](https://datatracker.ietf.org/doc/html/rfc3925)
+// E.g. option code 120 (SIP) 129 143 184
 
 /// Returns title of DHCP Option code, if known.
 pub fn title(code: u8) -> Option<&'static str> {
@@ -202,15 +219,15 @@ pub fn title(code: u8) -> Option<&'static str> {
         SUBNET_MASK => "Subnet Mask",
 
         TIME_OFFSET => "Time Offset",
-        ROUTER => "Router",
-        TIME_SERVER => "Time Server",
-        NAME_SERVER => "Name Server",
-        DOMAIN_NAME_SERVER => "Domain Name Server",
-        LOG_SERVER => "Log Server",
-        COOKIE_SERVER => "Cookie Server",
-        LPR_SERVER => "LPR Server",
-        IMPRESS_SERVER => "Impress Server",
-        RESOURCE_LOCATION_SERVER => "Resource Location Server",
+        ROUTERS => "Router",
+        TIME_SERVERS => "Time Server",
+        NAME_SERVERS => "Name Server",
+        DOMAIN_NAME_SERVERS => "Domain Name Server",
+        LOG_SERVERS => "Log Server",
+        COOKIE_SERVERS => "Cookie Server",
+        LPR_SERVERS => "LPR Server",
+        IMPRESS_SERVERS => "Impress Server",
+        RESOURCE_LOCATION_SERVERS => "Resource Location Server",
         HOST_NAME => "Host Name",
         BOOT_FILE_SIZE => "Boot File Size",
         MERIT_DUMP_FILE => "Merit Dump File",
@@ -220,11 +237,11 @@ pub fn title(code: u8) -> Option<&'static str> {
         EXTENSIONS_PATH => "Extensions Path",
 
         // IP LAYER PARAMETERS PER HOST",
-        IP_FORWARDING_ENABLE_DISABLE => "IP Forwarding Enable/Disable",
-        NON_LOCAL_SOURCE_ROUTING_ENABLE_DISABLE => "Non-Local Source Routing Enable/Disable",
+        IP_FORWARDING => "IP Forwarding Enable/Disable",
+        NON_LOCAL_SOURCE_ROUTING => "Non-Local Source Routing Enable/Disable",
         POLICY_FILTER => "Policy Filter",
         MAXIMUM_DATAGRAM_REASSEMBLY_SIZE => "Maximum Datagram Reassembly Size",
-        DEFAULT_IP_TIME_TO_LIVE => "Default IP Time-to-live",
+        DEFAULT_IP_TTL => "Default IP Time-to-live",
         PATH_MTU_AGING_TIMEOUT => "Path MTU Aging Timeout",
         PATH_MTU_PLATEAU_TABLE => "Path MTU Plateau Table",
 
@@ -278,7 +295,7 @@ pub fn title(code: u8) -> Option<&'static str> {
         // DHCP EXTENSIONS
         REQUESTED_IP_ADDRESS => "Requested IP Address",
         IP_ADDRESS_LEASE_TIME => "IP Address Lease Time",
-        OVERLOAD => "Overload",
+        OPTION_OVERLOAD => "Option Overload",
         DHCP_MESSAGE_TYPE => "DHCP Message Type",
         SERVER_IDENTIFIER => "Server Identifier",
         PARAMETER_REQUEST_LIST => "Parameter Request List",
@@ -286,7 +303,7 @@ pub fn title(code: u8) -> Option<&'static str> {
         MAXIMUM_DHCP_MESSAGE_SIZE => "Maximum DHCP Message Size",
         RENEWAL_TIME_VALUE => "Renewal (T1) Time Value",
         REBINDING_TIME_VALUE => "Rebinding (T2) Time Value",
-        VENDOR_CLASS_IDENTIFIER => "Vendor class identifier",
+        CLASS_IDENTIFIER => "Class-identifier (Vendor class-identifier)",
         CLIENT_IDENTIFIER => "Client-identifier",
 
         // Find below
