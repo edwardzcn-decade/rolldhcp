@@ -4,27 +4,27 @@ use std::fmt::Write;
 use std::str::FromStr;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum MacAddressError {
+pub enum ParseMacAddressError {
     InvalidLength,
     InvalidCharacter,
     // TODO
-    ParseError(String),
+    // ParseError(String),
 }
 
-impl fmt::Display for MacAddressError {
+impl fmt::Display for ParseMacAddressError {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         // fmt.write_str(self.description())
         match self {
-            MacAddressError::InvalidLength => write!(fmt, "Invalid length"),
-            MacAddressError::InvalidCharacter => write!(fmt, "Invalid character"),
-            MacAddressError::ParseError(s) => write!(fmt, "Parse error: {}", s),
+            ParseMacAddressError::InvalidLength => write!(fmt, "Invalid length"),
+            ParseMacAddressError::InvalidCharacter => write!(fmt, "Invalid character"),
+            // ParseMacAddressError::ParseError(s) => write!(fmt, "Parse error: {}", s),
         }
     }
 }
 
-impl Error for MacAddressError {}
+impl Error for ParseMacAddressError {}
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct MacAddress {
     octets: [u8; 6],
 }
@@ -77,27 +77,18 @@ impl MacAddress {
         self.octets.iter().all(|&x| x == 0xff)
     }
 
-    fn parese_from_str(mac_s: &str) -> Result<MacAddress, MacAddressError> {
+    fn parese_from_str(mac_s: &str) -> Result<MacAddress, ParseMacAddressError> {
         // todo!()
         let strs: Vec<&str> = mac_s.split(':').collect();
         if strs.len() != 6 {
-            return Err(MacAddressError::InvalidLength);
+            return Err(ParseMacAddressError::InvalidLength)
         }
-
-        let strs_iter = strs.iter();
-        match strs_iter
+        let bytes= strs
+            .iter()
             .map(|&x| u8::from_str_radix(x, 16))
             .collect::<Result<Vec<u8>, _>>()
-        {
-            Ok(v) => {
-                if v.iter().all(|&x| x <= 0xff) {
-                    Ok(MacAddress::new(v[0], v[1], v[2], v[3], v[4], v[5]))
-                } else {
-                    Err(MacAddressError::InvalidCharacter)
-                }
-            }
-            Err(_) => Err(MacAddressError::InvalidCharacter),
-        }
+            .map_err(|_| ParseMacAddressError::InvalidCharacter)?; // capture the ParseIntError here
+        Ok(MacAddress::new(bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5]))
     }
 }
 
@@ -127,8 +118,9 @@ impl From<MacAddress> for u64 {
 
 impl FromStr for MacAddress {
     /// Parse a string of the form `00:11:22:33:44:55` as a MAC address.
-    type Err = MacAddressError;
-    fn from_str(mac_s: &str) -> Result<MacAddress, MacAddressError> {
+    type Err = ParseMacAddressError;
+    #[inline]
+    fn from_str(mac_s: &str) -> Result<Self, Self::Err> {
         Self::parese_from_str(mac_s)
     }
 }

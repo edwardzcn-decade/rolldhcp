@@ -14,12 +14,15 @@ mod tests {
     }
 
     #[test]
+    fn test_storage() {
+        crate::dhcp::test_storage();
+    }
+
+    #[test]
     fn test_macaddress() {
         // Parse a MAC address from String
         let test_mac_str = "00:11:22:33:44:55";
-        let test_mac = MacAddress::from_str(&test_mac_str).unwrap_or_else(|_| {
-            panic!("Failed to parse MAC address: {}", test_mac_str)
-        });
+        let test_mac = MacAddress::from_str(&test_mac_str).expect("Failed to parse MAC address");
         println!("Parsed MAC address: {}", test_mac);
 
 

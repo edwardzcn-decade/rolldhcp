@@ -1,5 +1,8 @@
+mod lease;
 mod options;
-mod stucture;
 mod storage;
+mod stucture;
 
 pub use options::*;
+pub use storage::*;
+pub use lease::*;
