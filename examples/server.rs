@@ -7,6 +7,7 @@ use std::net::{SocketAddr, UdpSocket};
 use std::str::FromStr;
 
 use rolldhcp::dhcp::DhcpLease;
+use rolldhcp::dhcp::DhcpServer;
 
 // Add hashmap
 use std::collections::HashMap;
@@ -40,6 +41,8 @@ const LEASE_NUM: u32 = 252;
 // TODO: Derived constants
 // const IP_START_NUM: u32 = u32::from_be_bytes(IP_START);
 // const INFINITE_LEASE: Option<Instant> = None; // Special value for infinite lease
+
+
 
 fn main() {
     // Set the UDP server
@@ -78,6 +81,12 @@ fn main() {
         let l = DhcpLease::from_str(&line).expect("Failed to parse lease");
         leases_vec.push(l);
     }
+
+    // The protocol defines
+    // that the key will be (IP-subnet-number, hardware-address) unless the
+    // client explicitly supplies an identifier using the 'client
+    // identifier' option.
+
     let leases_lut: HashMap<IpAddr, DhcpLease> = leases_vec
         .into_iter()
         .map(|lease| (lease.get_ip().clone(), lease))
@@ -91,6 +100,7 @@ fn main() {
     let dhcp_lease_server = DhcpServer {
         leases: leases_lut,
         last_leases: 0,
+        server: Server
     };
     // start udp server
     // dhcp_lease_server.start(socket);

@@ -1,4 +1,4 @@
-use std::net::Ipv4Addr;
+use std::net::IpAddr;
 // One particular option
 // the "DHCP message type" option - must be included in every DHCP
 // message.  This option defines the "type" of the DHCP message.
@@ -25,32 +25,35 @@ use std::net::Ipv4Addr;
 // |  53 |  1  | 1-7 |
 // +-----+-----+-----+
 
-pub enum DhcpOptions{
+
+
+#[derive(PartialEq, Eq, Hash, Debug)]
+pub enum DhcpOption{
 
   // RFC 1497 Vendor Extensions
   // code 1 to 18 and code 255
   PadOption, // code 0
   EndOption, // code 255
-  SubnetMask(Ipv4Addr), // code 1 If both the subnet mask and the router option are specified in a DHCP reply, the subnet mask option MUST be first.
+  SubnetMask(IpAddr), // code 1 If both the subnet mask and the router option are specified in a DHCP reply, the subnet mask option MUST be first.
   TimeOffset(u32), // code 2 The client's subnet in seconds from Coordinated Universal Time (UTC)
 
   // All of XServers should be listed in order of preference.
   // The minimum length is 4 octets, and the length MUST always be a multiple of 4.
-  Routers(Vec<Ipv4Addr>), // code 3 // list of IP address
-  TimeServers(Vec<Ipv4Addr>), // code 4
-  NameServers(Vec<Ipv4Addr>), // code 5
-  DomainNameServers(Vec<Ipv4Addr>), // code 6
-  LogServers(Vec<Ipv4Addr>), // code 7
-  CookieServers(Vec<Ipv4Addr>), // code 8
-  LprServers(Vec<Ipv4Addr>), // code 9
-  ImpressServers(Vec<Ipv4Addr>), // code 10
-  ResourceLocationServers(Vec<Ipv4Addr>), // code 11
+  Routers(Vec<IpAddr>), // code 3 // list of IP address
+  TimeServers(Vec<IpAddr>), // code 4
+  NameServers(Vec<IpAddr>), // code 5
+  DomainNameServers(Vec<IpAddr>), // code 6
+  LogServers(Vec<IpAddr>), // code 7
+  CookieServers(Vec<IpAddr>), // code 8
+  LprServers(Vec<IpAddr>), // code 9
+  ImpressServers(Vec<IpAddr>), // code 10
+  ResourceLocationServers(Vec<IpAddr>), // code 11
 
   HostName(String), // code 12 // The name of the client may or may not be qualified with the local domain name (it is recommended that the client send the fully-qualified domain name). The code for this option is 12, and its minimum length is 1
   BootFileSize(u16), // code 13
   MeritDumpFile(String), // code 14 // This option specifies the path-name of a file to which the client's core image should be dumped in the event the client crashes.
   DomainName(String), // code 15 // This option specifies the client's domain name.
-  SwapServer(Ipv4Addr), // code 16
+  SwapServer(IpAddr), // code 16
   RootPath(String), // code 17
   ExtensionsPath(String), // code 18
 
@@ -72,11 +75,11 @@ pub enum DhcpOptions{
 
   // DHCP Extensions
   // code 50 to 61
-  RequestedIpAddress(Ipv4Addr), // code 50 // This option is used in a client request (DHCPDISCOVER) to allow the client to request that a particular IP address be assigned.
+  RequestedIpAddress(IpAddr), // code 50 // This option is used in a client request (DHCPDISCOVER) to allow the client to request that a particular IP address be assigned.
   IpAddressLeaseTime(u32), // code 51 // This option is used in a client request (DHCPDISCOVER or DHCPREQUEST) to allow the client to request a lease time for the IP address.  In a server reply (DHCPOFFER), a DHCP server uses this option to specify the lease time it is willing to offer.
   OptionOverload(OptionOverLoadCode), // code 52 // The code for this option is 52, and its length is 1.  Legal values for this option are: 1 2 3. This option is used to indicated that the DHCP "sname" or "file" fields are being overloaded by using them to carry DHCP options.
   DhcpMessageType(DhcpMessageTypeCode), // code 53
-  ServerIdentifier(Ipv4Addr), // code 54
+  ServerIdentifier(IpAddr), // code 54
   ParameterRequestList(Vec<u8>),   // code 55
   // or Message(String)
   // Message(Vec<u8>), // code 56
@@ -90,11 +93,54 @@ pub enum DhcpOptions{
 
 
 }
+
+impl DhcpOption {
+    pub fn code(&self) -> u8 {
+        match self {
+            DhcpOption::PadOption => PAD_OPTION,
+            DhcpOption::EndOption => END_OPTION,
+            DhcpOption::SubnetMask(_) => SUBNET_MASK,
+            DhcpOption::TimeOffset(_) => TIME_OFFSET,
+            DhcpOption::Routers(_) => ROUTERS,
+            DhcpOption::TimeServers(_) => TIME_SERVERS,
+            DhcpOption::NameServers(_) => NAME_SERVERS,
+            DhcpOption::DomainNameServers(_) => DOMAIN_NAME_SERVERS,
+            DhcpOption::LogServers(_) => LOG_SERVERS,
+            DhcpOption::CookieServers(_) => COOKIE_SERVERS,
+            DhcpOption::LprServers(_) => LPR_SERVERS,
+            DhcpOption::ImpressServers(_) => IMPRESS_SERVERS,
+            DhcpOption::ResourceLocationServers(_) => RESOURCE_LOCATION_SERVERS,
+            DhcpOption::HostName(_) => HOST_NAME,
+            DhcpOption::BootFileSize(_) => BOOT_FILE_SIZE,
+            DhcpOption::MeritDumpFile(_) => MERIT_DUMP_FILE,
+            DhcpOption::DomainName(_) => DOMAIN_NAME,
+            DhcpOption::SwapServer(_) => SWAP_SERVER,
+            DhcpOption::RootPath(_) => ROOT_PATH,
+            DhcpOption::ExtensionsPath(_) => EXTENSIONS_PATH,
+            DhcpOption::Unrecognized => 254, // Magic 254 for unrecognized options
+            DhcpOption::RequestedIpAddress(_) => REQUESTED_IP_ADDRESS,
+            DhcpOption::IpAddressLeaseTime(_) => IP_ADDRESS_LEASE_TIME,
+            DhcpOption::OptionOverload(_) => OPTION_OVERLOAD,
+            DhcpOption::DhcpMessageType(_) => DHCP_MESSAGE_TYPE,
+            DhcpOption::ServerIdentifier(_) => SERVER_IDENTIFIER,
+            DhcpOption::ParameterRequestList(_) => PARAMETER_REQUEST_LIST,
+            DhcpOption::Message(_) => MESSAGE,
+            DhcpOption::MaximumDhcpMessageSize(_) => MAXIMUM_DHCP_MESSAGE_SIZE,
+            DhcpOption::RenewalTimeValue(_) => RENEWAL_TIME_VALUE,
+            DhcpOption::RebindingTimeValue(_) => REBINDING_TIME_VALUE,
+            DhcpOption::ClassIdentifier(_) => CLASS_IDENTIFIER,
+            DhcpOption::ClientIdentifier(_) => CLIENT_IDENTIFIER,
+        }
+    }
+}
+#[derive(PartialEq, Eq, Hash, Debug)]
 pub enum OptionOverLoadCode {
   OverloadFile = 1,
   OverloadSname = 2,
   OverloadBoth = 3,
 }
+
+#[derive(PartialEq, Eq, Hash, Debug)]
 pub enum DhcpMessageTypeCode {
     Discover = 1,
     Offer = 2,
@@ -104,6 +150,19 @@ pub enum DhcpMessageTypeCode {
     Nak = 6,
     Release = 7,
 }
+
+// DHCP OP Field
+pub const BOOTREQUEST: u8 = 1;
+pub const BOOTREPLY: u8 = 2;
+
+// DHCP Flag Field
+// If this bit is set to 1, the DHCP message SHOULD be sent as
+//    an IP broadcast using an IP broadcast address (preferably 0xffffffff)
+//    as the IP destination address and the link-layer broadcast address as
+//    the link-layer destination address. 
+pub const FLAG_BROADCAST: u16 = 0x8000;
+pub const FLAG_ZERO: u16 = 0x0000;
+
 
 // DHCP Options;
 pub const PAD_OPTION: u8 = 0;

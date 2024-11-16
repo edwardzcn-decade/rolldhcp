@@ -37,8 +37,13 @@ impl MacAddress {
             octets: [a, b, c, d, e, f],
         }
     }
+    #[inline]
+    pub fn get_octets(&self) -> &[u8] {
+        &self.octets
+    }
+    
 
-    // TODO need test convert <-> u64
+    
     #[inline]
     pub const fn to_bits(self) -> u64 {
         let extended_octests: [u8; 8] = [
@@ -54,7 +59,7 @@ impl MacAddress {
         u64::from_be_bytes(extended_octests)
     }
 
-    // TODO need test convert <-> u64
+
     #[inline]
     pub const fn from_bits(bits: u64) -> MacAddress {
         let bytes: [u8; 8] = bits.to_be_bytes();
